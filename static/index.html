@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Troia Media Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo h1 {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-online {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .status-offline {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .icon-workflow { background: rgba(99, 102, 241, 0.2); }
+        .icon-api { background: rgba(34, 197, 94, 0.2); }
+        .icon-video { background: rgba(239, 68, 68, 0.2); }
+        .icon-youtube { background: rgba(255, 0, 0, 0.2); }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 16px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-green { background: linear-gradient(90deg, #22c55e, #16a34a); }
+        .progress-yellow { background: linear-gradient(90deg, #eab308, #ca8a04); }
+        .progress-red { background: linear-gradient(90deg, #ef4444, #dc2626); }
+
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .service-name {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .service-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .dot-green { background: #22c55e; }
+        .dot-red { background: #ef4444; }
+        .dot-yellow { background: #eab308; }
+
+        .execution-item {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .execution-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .status-success { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+        .status-error { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .status-running { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+
+        .refresh-btn {
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .refresh-btn:hover {
+            opacity: 0.9;
+        }
+
+        .channel-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+
+        .channel-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .channel-info h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .channel-info p {
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .last-updated {
+            font-size: 12px;
+            color: #6b7280;
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .wide-card {
+            grid-column: span 2;
+        }
+
+        @media (max-width: 768px) {
+            .wide-card {
+                grid-column: span 1;
+            }
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #6366f1;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <h1>TROIA MEDIA</h1>
+                <span class="status-badge status-online" id="system-status">System Online</span>
+            </div>
+            <button class="refresh-btn" onclick="refreshAll()">Refresh All</button>
+        </header>
+
+        <div class="grid">
+            <!-- Workflow Status -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Workflow Status</span>
+                    <div class="card-icon icon-workflow">⚡</div>
+                </div>
+                <div class="stat-value" id="workflow-status">Loading...</div>
+                <div class="stat-label" id="workflow-name">YouTube Autopilot</div>
+                <div class="list-item" style="margin-top: 16px;">
+                    <span>Last Updated</span>
+                    <span id="workflow-updated">-</span>
+                </div>
+                <div class="list-item">
+                    <span>Trigger Count</span>
+                    <span id="workflow-triggers">-</span>
+                </div>
+            </div>
+
+            <!-- ElevenLabs Credits -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">ElevenLabs Credits</span>
+                    <div class="card-icon icon-api">🎙️</div>
+                </div>
+                <div class="stat-value" id="elevenlabs-usage">--%</div>
+                <div class="stat-label" id="elevenlabs-chars">- / - characters</div>
+                <div class="progress-bar">
+                    <div class="progress-fill progress-green" id="elevenlabs-progress" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- OpenAI Status -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">OpenAI API</span>
+                    <div class="card-icon icon-api">🤖</div>
+                </div>
+                <div class="stat-value" id="openai-status">Checking...</div>
+                <div class="stat-label">GPT-4 & DALL-E</div>
+                <div class="list-item" style="margin-top: 16px;">
+                    <span>Status</span>
+                    <span id="openai-badge" class="status-badge status-online">Active</span>
+                </div>
+            </div>
+
+            <!-- Video API -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Video API</span>
+                    <div class="card-icon icon-video">🎬</div>
+                </div>
+                <div class="stat-value" id="video-api-status">Checking...</div>
+                <div class="stat-label">Coolify Hosted</div>
+                <div class="list-item" style="margin-top: 16px;">
+                    <span>Service</span>
+                    <span id="video-api-service">video-generator</span>
+                </div>
+            </div>
+
+            <!-- Services Status -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Services</span>
+                    <div class="card-icon icon-api">🔌</div>
+                </div>
+                <div id="services-list">
+                    <div class="list-item">
+                        <div class="service-name">
+                            <span class="service-dot dot-green" id="dot-n8n"></span>
+                            <span>n8n Workflow</span>
+                        </div>
+                        <span id="status-n8n">Online</span>
+                    </div>
+                    <div class="list-item">
+                        <div class="service-name">
+                            <span class="service-dot dot-green" id="dot-coolify"></span>
+                            <span>Coolify</span>
+                        </div>
+                        <span id="status-coolify">Online</span>
+                    </div>
+                    <div class="list-item">
+                        <div class="service-name">
+                            <span class="service-dot dot-green" id="dot-elevenlabs"></span>
+                            <span>ElevenLabs</span>
+                        </div>
+                        <span id="status-elevenlabs">Online</span>
+                    </div>
+                    <div class="list-item">
+                        <div class="service-name">
+                            <span class="service-dot dot-green" id="dot-telegram"></span>
+                            <span>Telegram Bot</span>
+                        </div>
+                        <span id="status-telegram">Online</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- YouTube Channels -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">YouTube Channels</span>
+                    <div class="card-icon icon-youtube">📺</div>
+                </div>
+                <div class="channel-card">
+                    <div class="channel-avatar">GA</div>
+                    <div class="channel-info">
+                        <h3>Global Atlas HQ</h3>
+                        <p>Discovery / Geopolitics</p>
+                    </div>
+                </div>
+                <div class="channel-card">
+                    <div class="channel-avatar">CR</div>
+                    <div class="channel-info">
+                        <h3>Capital Research HQ</h3>
+                        <p>Finance / Macro</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Executions -->
+            <div class="card wide-card">
+                <div class="card-header">
+                    <span class="card-title">Recent Executions</span>
+                    <div class="card-icon icon-workflow">📋</div>
+                </div>
+                <div id="executions-list">
+                    <div class="execution-item">
+                        <span class="loading"></span> Loading executions...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <p class="last-updated">Last updated: <span id="last-update">-</span></p>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+
+        async function fetchData(endpoint) {
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`);
+                return await response.json();
+            } catch (error) {
+                console.error(`Error fetching ${endpoint}:`, error);
+                return { error: error.message };
+            }
+        }
+
+        async function updateWorkflowStatus() {
+            const data = await fetchData('/api/workflow/status');
+            if (data.active !== undefined) {
+                document.getElementById('workflow-status').textContent = data.active ? 'ACTIVE' : 'INACTIVE';
+                document.getElementById('workflow-status').style.color = data.active ? '#22c55e' : '#ef4444';
+                document.getElementById('workflow-name').textContent = data.name || 'YouTube Autopilot';
+                document.getElementById('workflow-updated').textContent = data.updatedAt ? new Date(data.updatedAt).toLocaleString() : '-';
+                document.getElementById('workflow-triggers').textContent = data.triggerCount || '0';
+            }
+        }
+
+        async function updateElevenLabsCredits() {
+            const data = await fetchData('/api/credits/elevenlabs');
+            if (!data.error) {
+                document.getElementById('elevenlabs-usage').textContent = `${data.usage_percentage || 0}%`;
+                document.getElementById('elevenlabs-chars').textContent = `${data.character_count?.toLocaleString() || 'N/A'} / ${data.character_limit?.toLocaleString() || 'N/A'} characters`;
+
+                const progress = document.getElementById('elevenlabs-progress');
+                progress.style.width = `${data.usage_percentage || 0}%`;
+
+                if (data.usage_percentage > 80) {
+                    progress.className = 'progress-fill progress-red';
+                } else if (data.usage_percentage > 50) {
+                    progress.className = 'progress-fill progress-yellow';
+                } else {
+                    progress.className = 'progress-fill progress-green';
+                }
+            } else {
+                document.getElementById('elevenlabs-usage').textContent = 'N/A';
+                document.getElementById('elevenlabs-chars').textContent = data.error || 'Limited API access';
+            }
+        }
+
+        async function updateOpenAIStatus() {
+            const data = await fetchData('/api/credits/openai');
+            if (data.status === 'active') {
+                document.getElementById('openai-status').textContent = 'Active';
+                document.getElementById('openai-status').style.color = '#22c55e';
+                document.getElementById('openai-badge').textContent = 'Active';
+                document.getElementById('openai-badge').className = 'status-badge status-online';
+            } else {
+                document.getElementById('openai-status').textContent = 'Error';
+                document.getElementById('openai-status').style.color = '#ef4444';
+                document.getElementById('openai-badge').textContent = 'Error';
+                document.getElementById('openai-badge').className = 'status-badge status-offline';
+            }
+        }
+
+        async function updateVideoAPIStatus() {
+            const data = await fetchData('/api/services/video-api');
+            if (data.status === 'healthy') {
+                document.getElementById('video-api-status').textContent = 'Healthy';
+                document.getElementById('video-api-status').style.color = '#22c55e';
+            } else {
+                document.getElementById('video-api-status').textContent = data.status || 'Offline';
+                document.getElementById('video-api-status').style.color = '#ef4444';
+            }
+        }
+
+        async function updateExecutions() {
+            const data = await fetchData('/api/workflow/executions');
+            const container = document.getElementById('executions-list');
+
+            if (data.executions && data.executions.length > 0) {
+                container.innerHTML = data.executions.map(exe => {
+                    const statusClass = exe.status === 'success' ? 'status-success' :
+                                       exe.status === 'error' ? 'status-error' : 'status-running';
+                    const startTime = exe.startedAt ? new Date(exe.startedAt).toLocaleString() : '-';
+                    return `
+                        <div class="execution-item">
+                            <span class="execution-status ${statusClass}">${exe.status?.toUpperCase() || 'UNKNOWN'}</span>
+                            <span style="margin-left: 12px; color: #6b7280; font-size: 13px;">${startTime}</span>
+                            <span style="float: right; color: #6b7280; font-size: 12px;">ID: ${exe.id}</span>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                container.innerHTML = '<div class="execution-item">No executions yet</div>';
+            }
+        }
+
+        async function refreshAll() {
+            document.getElementById('last-update').textContent = 'Refreshing...';
+
+            await Promise.all([
+                updateWorkflowStatus(),
+                updateElevenLabsCredits(),
+                updateOpenAIStatus(),
+                updateVideoAPIStatus(),
+                updateExecutions()
+            ]);
+
+            document.getElementById('last-update').textContent = new Date().toLocaleString();
+        }
+
+        // Initial load
+        refreshAll();
+
+        // Auto refresh every 30 seconds
+        setInterval(refreshAll, 30000);
+    </script>
+</body>
+</html>
