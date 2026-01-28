@@ -1,12 +1,31 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import httpx
 import os
+import json
 from datetime import datetime
+from typing import List, Dict, Optional
+from collections import deque
 
-app = FastAPI(title="Troia Media Dashboard", version="1.0.0")
+app = FastAPI(title="Troia Media Dashboard", version="2.0.0")
+
+# In-memory event log (last 100 events)
+event_log: deque = deque(maxlen=100)
+
+# Pipeline status tracking
+pipeline_status: Dict = {
+    "current_stage": "idle",
+    "current_video": None,
+    "progress": 0,
+    "last_completed": None,
+    "stats": {
+        "videos_today": 0,
+        "videos_this_week": 0,
+        "total_videos": 0
+    }
+}
 
 # CORS
 app.add_middleware(
@@ -184,6 +203,118 @@ async def get_youtube_channel_info():
             {"name": "Capital Research HQ", "status": "pending_auth"}
         ],
         "setup_url": "https://troia.app.n8n.cloud"
+    }
+
+# ==================== AUTONOMOUS AGENT ENDPOINTS ====================
+
+@app.post("/api/events/log")
+async def log_event(request: Request):
+    """Log an event from n8n workflow or Claude Agent"""
+    try:
+        data = await request.json()
+        event = {
+            "id": len(event_log) + 1,
+            "timestamp": datetime.utcnow().isoformat(),
+            "type": data.get("type", "info"),  # info, success, warning, error, decision
+            "source": data.get("source", "system"),  # n8n, claude, video-api, youtube
+            "message": data.get("message", ""),
+            "details": data.get("details", {})
+        }
+        event_log.appendleft(event)
+        return {"status": "logged", "event_id": event["id"]}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/events")
+async def get_events(limit: int = 50):
+    """Get recent events"""
+    events = list(event_log)[:limit]
+    return {"events": events, "total": len(event_log)}
+
+@app.post("/api/pipeline/update")
+async def update_pipeline(request: Request):
+    """Update pipeline status from n8n workflow"""
+    global pipeline_status
+    try:
+        data = await request.json()
+        pipeline_status.update({
+            "current_stage": data.get("stage", pipeline_status["current_stage"]),
+            "current_video": data.get("video", pipeline_status["current_video"]),
+            "progress": data.get("progress", pipeline_status["progress"]),
+            "last_updated": datetime.utcnow().isoformat()
+        })
+
+        if data.get("completed"):
+            pipeline_status["last_completed"] = {
+                "title": data.get("video", {}).get("title"),
+                "timestamp": datetime.utcnow().isoformat()
+            }
+            pipeline_status["stats"]["videos_today"] += 1
+            pipeline_status["stats"]["total_videos"] += 1
+
+        return {"status": "updated"}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/pipeline/status")
+async def get_pipeline_status():
+    """Get current pipeline status"""
+    return pipeline_status
+
+@app.get("/api/content/calendar")
+async def get_content_calendar():
+    """Get content calendar from Google Sheets"""
+    # This will be called by the frontend to show upcoming content
+    try:
+        # For now, return placeholder - will integrate with Google Sheets API
+        async with httpx.AsyncClient() as client:
+            # Try to get from n8n or direct sheets API
+            return {
+                "upcoming": [
+                    {"date": "Today", "title": "Pending...", "status": "scheduled"},
+                ],
+                "note": "Connect Google Sheets for full calendar"
+            }
+    except Exception as e:
+        return {"error": str(e), "upcoming": []}
+
+@app.post("/api/agent/decision")
+async def log_agent_decision(request: Request):
+    """Log autonomous agent decisions"""
+    try:
+        data = await request.json()
+        decision = {
+            "id": len(event_log) + 1,
+            "timestamp": datetime.utcnow().isoformat(),
+            "type": "decision",
+            "source": "claude",
+            "message": f"AUTONOMOUS: {data.get('action', 'Unknown action')}",
+            "details": {
+                "reason": data.get("reason", ""),
+                "confidence": data.get("confidence", "high"),
+                "result": data.get("result", "pending")
+            }
+        }
+        event_log.appendleft(decision)
+        return {"status": "logged", "decision_id": decision["id"]}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/agent/status")
+async def get_agent_status():
+    """Get Claude Agent status"""
+    return {
+        "mode": "autonomous",
+        "status": "active",
+        "last_action": event_log[0] if event_log else None,
+        "decisions_today": sum(1 for e in event_log if e.get("type") == "decision"),
+        "capabilities": [
+            "content_scheduling",
+            "video_generation",
+            "youtube_upload",
+            "error_handling",
+            "performance_optimization"
+        ]
     }
 
 # Serve static files
